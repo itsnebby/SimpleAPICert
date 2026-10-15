@@ -1,0 +1,104 @@
+@UserManagementAPI_HostAddress = http://localhost:5093
+@bearerToken = dev-only-change-me
+@userId = {{createUser.response.body.$.id}}
+
+### Get all users (initially an empty array; expect 200)
+GET {{UserManagementAPI_HostAddress}}/api/users
+Accept: application/json
+Authorization: Bearer {{bearerToken}}
+
+### Missing token (expect 401)
+GET {{UserManagementAPI_HostAddress}}/api/users
+Accept: application/json
+
+### Invalid token (expect 401)
+GET {{UserManagementAPI_HostAddress}}/api/users
+Accept: application/json
+Authorization: Bearer invalid-token
+
+### Trigger the development-only exception handler test (expect 500 JSON)
+GET {{UserManagementAPI_HostAddress}}/_debug/throw
+Accept: application/json
+Authorization: Bearer {{bearerToken}}
+
+### Create a user (expect 201 Created)
+# @name createUser
+POST {{UserManagementAPI_HostAddress}}/api/users
+Content-Type: application/json
+Authorization: Bearer {{bearerToken}}
+
+{
+	"firstName": "Avery",
+	"lastName": "Morgan",
+	"email": "avery.morgan@techhive.example",
+	"department": "IT"
+}
+
+### Get the created user (expect 200 OK)
+GET {{UserManagementAPI_HostAddress}}/api/users/{{userId}}
+Accept: application/json
+Authorization: Bearer {{bearerToken}}
+
+### Create a duplicate email (expect 409 Conflict)
+POST {{UserManagementAPI_HostAddress}}/api/users
+Content-Type: application/json
+Authorization: Bearer {{bearerToken}}
+
+{
+	"firstName": "Another",
+	"lastName": "Person",
+	"email": "AVERY.MORGAN@techhive.example",
+	"department": "HR"
+}
+
+### Update the user (expect 200 OK)
+PUT {{UserManagementAPI_HostAddress}}/api/users/{{userId}}
+Content-Type: application/json
+Authorization: Bearer {{bearerToken}}
+
+{
+	"firstName": "Avery",
+	"lastName": "Morgan",
+	"email": "avery.morgan@techhive.example",
+	"department": "Human Resources"
+}
+
+### Delete the user (expect 204 No Content)
+DELETE {{UserManagementAPI_HostAddress}}/api/users/{{userId}}
+Authorization: Bearer {{bearerToken}}
+
+### Get the deleted user (expect 404 Not Found)
+GET {{UserManagementAPI_HostAddress}}/api/users/{{userId}}
+Accept: application/json
+Authorization: Bearer {{bearerToken}}
+
+### Get a user with a valid but unknown ID (expect 404 Problem Details)
+GET {{UserManagementAPI_HostAddress}}/api/users/00000000-0000-0000-0000-000000000000
+Accept: application/json
+Authorization: Bearer {{bearerToken}}
+
+### Submit invalid user data (expect 400 ValidationProblemDetails)
+POST {{UserManagementAPI_HostAddress}}/api/users
+Content-Type: application/json
+Authorization: Bearer {{bearerToken}}
+
+{
+	"firstName": "   ",
+	"lastName": "Morgan",
+	"email": "not-an-email"
+}
+
+### Update a user with a valid but unknown ID (expect 404 Problem Details)
+PUT {{UserManagementAPI_HostAddress}}/api/users/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+Authorization: Bearer {{bearerToken}}
+
+{
+	"firstName": "Avery",
+	"lastName": "Morgan",
+	"email": "avery.morgan@techhive.example"
+}
+
+### Delete a user with a valid but unknown ID (expect 404 Problem Details)
+DELETE {{UserManagementAPI_HostAddress}}/api/users/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{bearerToken}}
